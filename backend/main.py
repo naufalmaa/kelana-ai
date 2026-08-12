@@ -1,4 +1,4 @@
-from services.trip_services import calculate_daily_budget, get_trip_category, get_transport_recommendation
+from services.trip_services import calculate_daily_budget, get_trip_category, get_transport_recommendation, get_recommended_places
 from typing import List
 
 """
@@ -29,11 +29,20 @@ def print_trip_summary(
     # Get Transport Recommendation
     recommended_transportation = get_transport_recommendation(trip_category)
 
+    # Get Place Recommendation
+    recommended_places = {}
+    index = 0
+    while index < len(destination):
+        recommended_places[destination[index]] = get_recommended_places(destination[index])
+        index += 1
+
+    print_recommended_places = ', '.join([f"{key}: {value}" for key, value in recommended_places.items()])
+
     print("\n========================")
     print("KelanaAI")
     print("========================")
     print(f"Total Destination           : {total_destination}")
-    print(f"Destination                 : {destination}")
+    print(f"Destination                 : {', '.join(destination)}")
     print(f"Country                     : {country}")
     print(f"Days                        : {days}")
     print(f"Budget                      : {formatted_budget}")
@@ -42,6 +51,7 @@ def print_trip_summary(
     print(f"Daily Budget                : {daily_budget}")
     print(f"Trip Category               : {trip_category}")
     print(f"Recommended Transportation  : {recommended_transportation}")
+    print(f"Recommended Places to Visit : {print_recommended_places}")
     print("========================\n")
 
 

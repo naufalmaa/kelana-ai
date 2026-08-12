@@ -18,3 +18,11 @@ def get_transport_recommendation(trip_category):
     elif trip_category == "Luxury":
         return "Flight"
 
+def get_recommended_places(destination):
+    recommendations = {
+        "Japan" : ["Tokyo Tower", "Shibuya", "Mount Fuji"],
+        "Bali" : ["Ubud", "Kuta Beach", "Tanah Lot"],
+        "Singapore" : ["Marine Bay Sands", "Gardens by the Bay", "Sentosa"]
+    }
+
+    return recommendations.get(destination, ["City Center", "Local Market", "Popular Landmark"])

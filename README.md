@@ -61,25 +61,3 @@ Travel Month : December
 ```
 
 ---
-
-## 🛠️ Panduan Git & Release Management (Nomor 3)
-
-Jika Anda siap melakukan pengerjaan bagian 3, Anda bisa menjalankan perintah berikut di terminal:
-
-```bash
-# 1. Inisialisasi Git repository
-git init
-
-# 2. Lakukan commit pertama
-git add .
-git commit -m "Create initial KelanaAI console app"
-
-# 3. Hubungkan ke remote origin repository di GitHub (ganti URL repository Anda)
-git remote add origin https://github.com/USERNAME/kelana-ai.git
-git branch -M main
-git push -u origin main
-
-# 4. Buat Tag Release v0.1.0 dan Push Tag ke GitHub
-git tag v0.1.0
-git push origin v0.1.0
-```
