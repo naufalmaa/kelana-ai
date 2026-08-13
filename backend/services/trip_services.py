@@ -26,3 +26,11 @@ def get_recommended_places(destination):
     }
 
     return recommendations.get(destination, ["City Center", "Local Market", "Popular Landmark"])
+
+def get_travel_season(month):
+    if month == "december":
+        return "Peak Season"
+    elif month == "june":
+        return "Holiday Season"
+    else:
+        return "Regular Season"
