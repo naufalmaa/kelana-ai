@@ -1,4 +1,4 @@
-from services.trip_services import calculate_daily_budget, get_trip_category, get_transport_recommendation, get_recommended_places
+from services.trip_services import calculate_daily_budget, get_trip_category, get_transport_recommendation, get_recommended_places, get_travel_season
 from typing import List
 
 """
@@ -31,12 +31,12 @@ def print_trip_summary(
 
     # Get Place Recommendation
     recommended_places = {}
-    index = 0
-    while index < len(destination):
+    for index in range (len(destination)):
         recommended_places[destination[index]] = get_recommended_places(destination[index])
-        index += 1
 
     print_recommended_places = ', '.join([f"{key}: {value}" for key, value in recommended_places.items()])
+
+    travel_season = get_travel_season(travel_month)
 
     print("\n========================")
     print("KelanaAI")
@@ -48,6 +48,7 @@ def print_trip_summary(
     print(f"Budget                      : {formatted_budget}")
     print(f"Currency                    : {currency}")
     print(f"Travel Month                : {travel_month}")
+    print(f"Travel Season               : {travel_season}")
     print(f"Daily Budget                : {daily_budget}")
     print(f"Trip Category               : {trip_category}")
     print(f"Recommended Transportation  : {recommended_transportation}")
@@ -97,7 +98,7 @@ def get_user_inputs():
             print("⚠️  Input tidak valid! Harap masukkan angka desimal/bulat (float).")
 
     currency = input("Masukkan Mata Uang   : ").strip().upper()
-    travel_month = input("Masukkan Bulan Travel: ").strip()
+    travel_month = input("Masukkan Bulan Travel: ").strip().lower()
 
     return total_destination, destination, country, days, budget, currency, travel_month
 
