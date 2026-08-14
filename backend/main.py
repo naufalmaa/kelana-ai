@@ -40,6 +40,18 @@ def trip_categories():
         "Luxury"
     ]
 
+@app.get("/api/v1/recommendations")
+def recommendations():
+    return [
+        "Tokyo Tower", "Mount Fuji", "Shibuya"
+    ]
+
+@app.get("/api/v1/transportations")
+def transportations():
+    return [
+        "Bus", "Train", "Flight"
+    ]
+
 @app.post("/api/v1/trips")
 def create_trip(request: TripRequest):
     destination = request.destination
