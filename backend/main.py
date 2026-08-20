@@ -66,8 +66,12 @@ def create_trip(request: TripRequest):
 
     trip = Trip(
         destination=request.destination,
+        country=request.country,
         days=days,
         budget=budget,
+        currency=request.currency,
+        travel_style=request.travel_style,
+        travel_month=request.travel_month,
         category=category,
         daily_budget=daily_budget
     )
@@ -102,13 +106,17 @@ def get_trip(trip_id: int):
 def delete_trip(trip_id: int):
     db = SessionLocal()
     trip = db.query(Trip).filter(Trip.id == trip_id).first()
-    db.delete(trip)
-    db.commit()
-    db.close()
+
     # handling not found
     if trip is None:
         raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} is not found")
+
+    db.delete(trip)
+    db.commit()
+    db.close()
+
     return trip
+
 
 @app.put("/api/v1/trips/{trip_id}")
 def update_trip(trip_id: int, request: TripRequest):
@@ -125,6 +133,10 @@ def update_trip(trip_id: int, request: TripRequest):
     trip.currency = request.currency
     trip.travel_style = request.travel_style
     trip.travel_month = request.travel_month
+
+    trip.category = get_trip_category(request.budget)
+    trip.daily_budget = calculate_daily_budget(request.budget, request.days)
+    
     db.commit()
     db.refresh(trip)
     db.close()
