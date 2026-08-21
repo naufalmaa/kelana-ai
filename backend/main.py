@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from services.trip_services import calculate_daily_budget, get_trip_category, get_transport_recommendation, get_recommended_places, get_travel_season
+from services.bedrock_service import get_ai_recommendation
 from typing import List
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -64,6 +65,15 @@ def create_trip(request: TripRequest):
     daily_budget = calculate_daily_budget(budget, days)
     category = get_trip_category(budget)
 
+    ai_recommendation = get_ai_recommendation(
+        destination=request.destination,
+        country=request.country,
+        days=days,
+        budget=budget,
+        travel_style=request.travel_style,
+        travel_month=request.travel_month
+    )
+
     trip = Trip(
         destination=request.destination,
         country=request.country,
@@ -73,7 +83,8 @@ def create_trip(request: TripRequest):
         travel_style=request.travel_style,
         travel_month=request.travel_month,
         category=category,
-        daily_budget=daily_budget
+        daily_budget=daily_budget,
+        ai_recommendation=ai_recommendation
     )
 
     db = SessionLocal()

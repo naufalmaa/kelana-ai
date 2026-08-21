@@ -1,9 +1,10 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float, DateTime, Text
 from database import Base
+import datetime
 
 class Trip(Base):
     __tablename__   = "trips"
-    
+
     id              = Column(Integer, primary_key=True, index=True)
     destination     = Column(String, nullable=False)
     country         = Column(String, nullable=False)
@@ -14,3 +15,5 @@ class Trip(Base):
     daily_budget    = Column(Float, nullable=False)
     travel_style    = Column(String, nullable=False)
     travel_month    = Column(String, nullable=False)
+    ai_recommendation = Column(Text, nullable=False)
+    created_at      = Column(DateTime, default=datetime.datetime.now)
