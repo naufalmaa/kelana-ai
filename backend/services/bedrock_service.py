@@ -1,5 +1,7 @@
 import os
-from typing import Optional
+import json
+import re
+from typing import Optional, Dict, Any
 import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
@@ -33,6 +35,18 @@ def configure_bedrock_client(
 client = configure_bedrock_client()
 
 
+def clean_json_response(raw_text: str) -> str:
+    """
+    Extracts valid JSON substring from LLM response if markdown code blocks or surrounding text exist.
+    """
+    text = raw_text.strip()
+    # If enclosed in ```json ... ``` or ``` ... ```
+    match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text, re.IGNORECASE)
+    if match:
+        text = match.group(1).strip()
+    return text
+
+
 def get_ai_recommendation(
     destination: str,
     country: str,
@@ -40,38 +54,109 @@ def get_ai_recommendation(
     budget: float,
     travel_style: str,
     travel_month: str,
+    currency: str = "USD",
     model_id: Optional[str] = None,
 ) -> str:
     """
-    Generate an AI travel itinerary recommendation using AWS Bedrock.
-
-    Format your response as Markdown with Headers (##) and bullet lists (-).
-
-    Here are the list that must be available on the plan:
-    1. Daily Itinerary and Activities
-    2. Estimated Daily Budget
-    3. Local Food Recommendations
-    4. Transportation & Accomodation Suggestions
-
-    The response format per day MUST contain:
-    - Morning activities: Give 2-3 morning activities recommendations.
-    - Afternoon activities: Give cultural sites recommendation and local experience.
-    - Evening activities: Give dinner spots and nightlife recommendations.
-
-    Prompt format:
-    You are an experienced travel planner. Plan a {days}-day itenerary for {destination} in {country}.
-    "Budget: USD {budget}\n"
-    "Travel Style: {travel_style}\n"
-    "Travel Month: {travel_month}\n"
+    Generate an intelligent, structured AI travel itinerary recommendation using AWS Bedrock.
+    Returns a JSON string containing 4 distinct sections:
+    1. daily_itinerary (one card per day with morning, afternoon, evening activities)
+    2. travel_tips (etiquette, packing, transportation, weather)
+    3. food_recommendations (must-try dishes & culinary spots)
+    4. budget_breakdown (itemized cost categories, percentages, and amounts)
     """
     selected_model_id = model_id or os.getenv("MODEL_ID", "amazon.nova-lite-v1:0")
 
-    prompt = (
-        f"You are an experienced travel planner. Plan a {days}-day itenerary for {destination} in {country}. \n"
-        f"Budget: USD {budget}\n"
-        f"Travel Style: {travel_style}\n"
-        f"Travel Month: {travel_month}\n"
-    )
+    prompt = f"""You are an elite, highly knowledgeable travel expert and itinerary architect.
+Generate a comprehensive, engaging, and highly practical travel plan for {destination}, {country}.
+
+Trip Parameters:
+- Destination: {destination}, {country}
+- Duration: {days} days
+- Total Budget: {currency} {budget}
+- Travel Style: {travel_style}
+- Travel Month / Season: {travel_month}
+
+You MUST return your entire output STRICTLY as a single valid JSON object. Do not include any explanations or commentary outside of the JSON.
+
+Expected JSON Structure:
+{{
+  "trip_overview": "A compelling 2-3 sentence overview highlighting the vibe, season, and charm of {destination} in {travel_month}.",
+  "daily_itinerary": [
+    {{
+      "day": 1,
+      "title": "Short title describing the theme of this day",
+      "morning": "Detailed morning activity: 2-3 specific sights, scenic walks, or iconic landmarks.",
+      "afternoon": "Detailed afternoon activity: cultural sites, local experiences, or immersion.",
+      "evening": "Detailed evening activity: dinner spots, night markets, viewpoints, or relaxing nightlife.",
+      "daily_tip": "A practical insider tip for this specific day."
+    }}
+  ],
+  "travel_tips": [
+    {{
+      "title": "Local Transport & Navigation",
+      "tip": "Specific passes, transit apps, metro/bus advice for {destination}."
+    }},
+    {{
+      "title": "Season & Weather in {travel_month}",
+      "tip": "Temperature expectation, what to pack, and rainfall advice."
+    }},
+    {{
+      "title": "Culture & Etiquette",
+      "tip": "Important customs, tipping etiquette, and local norms to respect."
+    }},
+    {{
+      "title": "Money & Connectivity",
+      "tip": "Cash vs card preferences, best SIM card/eSIM options, and money-saving advice."
+    }}
+  ],
+  "food_recommendations": [
+    {{
+      "dish": "Signature Dish Name",
+      "description": "Appetizing description of ingredients, flavor profile, and cultural significance.",
+      "recommended_spot": "Neighborhood, famous market, or restaurant type where locals eat this."
+    }}
+  ],
+  "budget_breakdown": [
+    {{
+      "category": "Accommodation",
+      "percentage": 35,
+      "estimated_amount": {round(budget * 0.35, 2)},
+      "description": "Recommended stays matching {travel_style} style in {currency}"
+    }},
+    {{
+      "category": "Food & Dining",
+      "percentage": 30,
+      "estimated_amount": {round(budget * 0.30, 2)},
+      "description": "Daily meals, street snacks, and beverages"
+    }},
+    {{
+      "category": "Activities & Attractions",
+      "percentage": 20,
+      "estimated_amount": {round(budget * 0.20, 2)},
+      "description": "Entry fees, guided tours, and museum passes"
+    }},
+    {{
+      "category": "Local Transportation",
+      "percentage": 10,
+      "estimated_amount": {round(budget * 0.10, 2)},
+      "description": "Metro, trains, public transit, and rideshares"
+    }},
+    {{
+      "category": "Buffer & Miscellaneous",
+      "percentage": 5,
+      "estimated_amount": {round(budget * 0.05, 2)},
+      "description": "Souvenirs, shopping, and emergency reserve"
+    }}
+  ]
+}}
+
+Requirements:
+- Provide exactly {days} day objects in daily_itinerary (from day 1 to day {days}).
+- Provide 3-5 distinct food_recommendations authentic to {destination} and {country}.
+- Ensure all budget numbers reflect {currency} {budget}.
+- Output ONLY valid, parsable JSON.
+"""
 
     try:
         response = client.converse(
@@ -87,7 +172,14 @@ def get_ai_recommendation(
         output_message = response.get("output", {}).get("message", {})
         content_list = output_message.get("content", [])
         if content_list and "text" in content_list[0]:
-            return content_list[0]["text"]
+            raw_text = content_list[0]["text"]
+            cleaned = clean_json_response(raw_text)
+            # Validate that it is valid JSON
+            try:
+                parsed = json.loads(cleaned)
+                return json.dumps(parsed, ensure_ascii=False)
+            except Exception:
+                return cleaned
         return ""
 
     except ClientError as e:

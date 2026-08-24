@@ -1,8 +1,8 @@
-from fastapi import HTTPException
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from services.trip_services import calculate_daily_budget, get_trip_category, get_transport_recommendation, get_recommended_places, get_travel_season
 from services.bedrock_service import get_ai_recommendation
 from typing import List
-from fastapi import FastAPI
 from pydantic import BaseModel
 from database import init_db, SessionLocal
 from models.trips import Trip
@@ -23,6 +23,14 @@ class TripRequest (BaseModel):
     travel_month: str
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 init_db()
 
@@ -71,7 +79,8 @@ def create_trip(request: TripRequest):
         days=days,
         budget=budget,
         travel_style=request.travel_style,
-        travel_month=request.travel_month
+        travel_month=request.travel_month,
+        currency=request.currency,
     )
 
     trip = Trip(
@@ -126,7 +135,8 @@ def create_trip_ai(request: TripRequest, trip_id: int):
         days=days,
         budget=budget,
         travel_style=request.travel_style,
-        travel_month=request.travel_month
+        travel_month=request.travel_month,
+        currency=request.currency,
     )
 
     trip = Trip(
