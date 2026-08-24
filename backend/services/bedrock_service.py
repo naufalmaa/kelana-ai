@@ -48,10 +48,15 @@ def get_ai_recommendation(
     Format your response as Markdown with Headers (##) and bullet lists (-).
 
     Here are the list that must be available on the plan:
-    1. Daily Itinerary
+    1. Daily Itinerary and Activities
     2. Estimated Daily Budget
     3. Local Food Recommendations
     4. Transportation & Accomodation Suggestions
+
+    The response format per day MUST contain:
+    - Morning activities: Give 2-3 morning activities recommendations.
+    - Afternoon activities: Give cultural sites recommendation and local experience.
+    - Evening activities: Give dinner spots and nightlife recommendations.
 
     Prompt format:
     You are an experienced travel planner. Plan a {days}-day itenerary for {destination} in {country}.
