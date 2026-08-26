@@ -7,6 +7,11 @@ from pydantic import BaseModel
 from database import init_db, SessionLocal
 from models.trips import Trip
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 # """
 # KelanaAI - Trip Summary Generator
 # Sesi 4: Integrasi FastAPI dengan Database PostgreSQL
@@ -24,9 +29,11 @@ class TripRequest (BaseModel):
 
 app = FastAPI()
 
+frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[frontend_url, "http://localhost:3000", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
