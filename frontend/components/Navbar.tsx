@@ -42,7 +42,7 @@ export function Navbar({
           {/* Nav links */}
           <nav className="hidden md:flex items-center gap-1 pl-4 border-l border-slate-200 text-xs font-bold">
             <Link
-              href="/"
+              href="/#planner"
               className="px-3 py-1.5 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-indigo-600 transition-colors flex items-center gap-1.5"
             >
               <PlusCircle className="h-3.5 w-3.5" />

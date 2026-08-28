@@ -19,7 +19,7 @@ import {
   Camera,
 } from "lucide-react";
 import { Trip, TripFormData, PresetDestination } from "@/types/trip";
-import { PRESET_TRIPS, DEFAULT_HERO_IMAGE, CURRENCIES, MONTHS, STYLES } from "@/lib/constants";
+import { PRESET_TRIPS, DEFAULT_HERO_IMAGE, CURRENCIES, MONTHS, TRAVEL_STYLES, TRIP_THEMES } from "@/lib/constants";
 import { getTrips, generateTrip, checkBackendHealth } from "@/services/tripService";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -34,7 +34,8 @@ export default function Home() {
     days: 5,
     budget: 2000,
     currency: "USD",
-    travel_style: "Cultural & Culinary",
+    travel_style: "Solo",
+    trip_theme: "Cultural & Culinary",
     travel_month: "April",
   });
 
@@ -108,6 +109,18 @@ export default function Home() {
     };
   }, [selectedTrip]);
 
+  // Smooth scroll to planner form if hash is #planner
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#planner") {
+      const el = document.getElementById("planner");
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth" });
+        }, 80);
+      }
+    }
+  }, []);
+
   // Handle Submit Form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,6 +136,7 @@ export default function Home() {
         budget: Number(formData.budget),
         currency: formData.currency,
         travel_style: formData.travel_style,
+        trip_theme: formData.trip_theme,
         travel_month: formData.travel_month,
       };
 
@@ -131,8 +145,12 @@ export default function Home() {
       setSuccessMessage(`Itinerary for ${createdTrip.destination} has been generated successfully!`);
       setBackendOnline(true);
 
-      // Part 8: After generating a trip, automatically redirect to dashboard
-      router.push("/trips");
+      // UX Improvement 1: Redirect user straight to /trips/[id]
+      if (createdTrip && createdTrip.id) {
+        router.push(`/trips/${createdTrip.id}`);
+      } else {
+        router.push("/trips");
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error generating itinerary";
       setApiError(msg);
@@ -149,6 +167,7 @@ export default function Home() {
       budget: preset.budget,
       currency: preset.currency,
       travel_style: preset.travel_style,
+      trip_theme: preset.trip_theme || "Cultural & Culinary",
       travel_month: preset.travel_month,
     });
   };
@@ -159,6 +178,7 @@ export default function Home() {
       t.destination?.toLowerCase().includes(q) ||
       t.country?.toLowerCase().includes(q) ||
       t.travel_style?.toLowerCase().includes(q) ||
+      t.trip_theme?.toLowerCase().includes(q) ||
       t.category?.toLowerCase().includes(q)
     );
   });
@@ -305,7 +325,7 @@ export default function Home() {
           {/* LEFT COLUMN: Input Form & Saved Itineraries (Mobile Full Width, Desktop 5 Cols) */}
           <div className="lg:col-span-5 space-y-6 w-full">
             {/* Form Card */}
-            <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-xs">
+            <div id="planner" className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-xs scroll-mt-24">
               <div className="flex items-center gap-3 mb-5 pb-4 border-b border-slate-100">
                 <div className="h-10 w-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                   <Plane className="h-5 w-5" />
@@ -431,20 +451,49 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Travel Style */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Travel Style</label>
-                  <select
-                    value={formData.travel_style}
-                    onChange={(e) => setFormData({ ...formData, travel_style: e.target.value })}
-                    className="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all cursor-pointer"
-                  >
-                    {STYLES.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
-                    ))}
-                  </select>
+                {/* Travel Style (Party) & Trip Theme (Activity Focus) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                      <span>Travel Style</span>
+                      <span className="text-[10px] font-semibold text-slate-400">Companion</span>
+                    </label>
+                    <select
+                      value={formData.travel_style}
+                      onChange={(e) => setFormData({ ...formData, travel_style: e.target.value })}
+                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all cursor-pointer"
+                    >
+                      {TRAVEL_STYLES.map((s) => (
+                        <option key={s} value={s}>
+                          {s === "Solo" ? "👤 Solo" : s === "Couple" ? "❤️ Couple" : "👨‍👩‍👧‍👦 Family"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                      <span>Trip Theme</span>
+                      <span className="text-[10px] font-semibold text-slate-400">Activity Focus</span>
+                    </label>
+                    <select
+                      value={formData.trip_theme}
+                      onChange={(e) => setFormData({ ...formData, trip_theme: e.target.value })}
+                      className="w-full bg-slate-50/80 border border-slate-200 rounded-xl px-3.5 py-3 text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all cursor-pointer"
+                    >
+                      {TRIP_THEMES.map((theme) => (
+                        <option key={theme} value={theme}>
+                          {theme === "Cultural & Culinary"
+                            ? "🍜 Cultural & Culinary"
+                            : theme === "Relaxed & Nature"
+                            ? "🌴 Relaxed & Nature"
+                            : theme === "Adventure & Outdoors"
+                            ? "🧭 Adventure & Outdoors"
+                            : "✨ Luxury & Sightseeing"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Primary Submit Button */}

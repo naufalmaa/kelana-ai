@@ -12,6 +12,8 @@ import {
   Plane,
   ArrowUpDown,
   Info,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Trip } from "@/types/trip";
 import { getTrips, checkBackendHealth } from "@/services/tripService";
@@ -21,6 +23,8 @@ import { Footer } from "@/components/Footer";
 
 export type SortMode = "latest" | "oldest" | "highest_budget" | "lowest_budget";
 
+const ITEMS_PER_PAGE = 6;
+
 export default function TripsHistoryPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -29,6 +33,7 @@ export default function TripsHistoryPage() {
   const [sortMode, setSortMode] = useState<SortMode>("latest");
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "compact">("grid");
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const refreshData = async () => {
     setLoading(true);
@@ -87,15 +92,16 @@ export default function TripsHistoryPage() {
   const processedTrips = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
 
-    // 1. Search by Destination (text search) & Travel Style (text search)
+    // 1. Search by Destination, Country, Travel Style (Companion), Theme, or Category
     const filtered = trips.filter((t) => {
       if (!q) return true;
       const destinationMatch =
         t.destination?.toLowerCase().includes(q) ||
         t.country?.toLowerCase().includes(q);
       const styleMatch = t.travel_style?.toLowerCase().includes(q);
+      const themeMatch = t.trip_theme?.toLowerCase().includes(q);
       const categoryMatch = t.category?.toLowerCase().includes(q);
-      return destinationMatch || styleMatch || categoryMatch;
+      return destinationMatch || styleMatch || themeMatch || categoryMatch;
     });
 
     // 2. Sort by selected criteria (Challenge bonus)
@@ -113,6 +119,23 @@ export default function TripsHistoryPage() {
       }
     });
   }, [trips, searchQuery, sortMode]);
+
+  // Pagination calculation (Bonus Feature)
+  const totalPages = Math.max(1, Math.ceil(processedTrips.length / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedTrips = processedTrips.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Smooth scroll to top of list
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-indigo-600 selection:text-white">
@@ -150,7 +173,7 @@ export default function TripsHistoryPage() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="/"
+              href="/#planner"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-indigo-200 transition-all active:scale-95 cursor-pointer"
             >
               <PlusCircle className="h-4 w-4" />
@@ -178,14 +201,20 @@ export default function TripsHistoryPage() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search trips..."
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="Search trips by destination or style..."
               className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100 transition-all shadow-2xs"
             />
             {searchQuery && (
               <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                onClick={() => {
+                  setSearchQuery("");
+                  setCurrentPage(1);
+                }}
+                className="absolute right-3 top-3 text-xs text-slate-400 hover:text-slate-600 font-bold cursor-pointer"
               >
                 Clear
               </button>
@@ -201,7 +230,10 @@ export default function TripsHistoryPage() {
               </div>
               <select
                 value={sortMode}
-                onChange={(e) => setSortMode(e.target.value as SortMode)}
+                onChange={(e) => {
+                  setSortMode(e.target.value as SortMode);
+                  setCurrentPage(1);
+                }}
                 className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 shadow-2xs cursor-pointer"
               >
                 <option value="latest">Latest (newest first)</option>
@@ -255,8 +287,8 @@ export default function TripsHistoryPage() {
                 Create your first itinerary.
               </p>
               <Link
-                href="/"
-                className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-[#23816e] hover:bg-emerald-50 font-black text-sm sm:text-base rounded-full shadow-md hover:shadow-lg transition-all active:scale-95"
+                href="/#planner"
+                className="inline-flex items-center gap-2 px-6 py-3.5 bg-white text-[#23816e] hover:bg-emerald-50 font-black text-sm sm:text-base rounded-full shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
               >
                 <span>Generate a Trip</span>
                 <ArrowRight className="h-4 w-4" />
@@ -278,7 +310,7 @@ export default function TripsHistoryPage() {
             </p>
             <button
               onClick={() => setSearchQuery("")}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
             >
               Reset Search Filter
             </button>
@@ -288,7 +320,7 @@ export default function TripsHistoryPage() {
           <div className="space-y-6">
             {viewMode === "grid" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {processedTrips.map((trip) => (
+                {paginatedTrips.map((trip) => (
                   <TripCard
                     key={trip.id}
                     trip={trip}
@@ -299,7 +331,7 @@ export default function TripsHistoryPage() {
               </div>
             ) : (
               <div className="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-6 shadow-xs space-y-3">
-                {processedTrips.map((trip) => (
+                {paginatedTrips.map((trip) => (
                   <TripCard
                     key={trip.id}
                     trip={trip}
@@ -315,6 +347,53 @@ export default function TripsHistoryPage() {
               <Info className="h-4 w-4 text-indigo-600 shrink-0" />
               <span>Click any card to open its detail page.</span>
             </div>
+
+            {/* Bonus Feature: Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="pt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-xs font-semibold text-slate-500">
+                  Showing <strong className="text-slate-800">{startIndex + 1}</strong> to{" "}
+                  <strong className="text-slate-800">
+                    {Math.min(startIndex + ITEMS_PER_PAGE, processedTrips.length)}
+                  </strong>{" "}
+                  of <strong className="text-slate-800">{processedTrips.length}</strong> trips
+                </p>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handlePageChange(safeCurrentPage - 1)}
+                    disabled={safeCurrentPage === 1}
+                    className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`h-9 w-9 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        safeCurrentPage === page
+                          ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
+                          : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => handlePageChange(safeCurrentPage + 1)}
+                    disabled={safeCurrentPage === totalPages}
+                    className="p-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                    title="Next Page"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>

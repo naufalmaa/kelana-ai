@@ -154,8 +154,13 @@ export function TripDetailView({
         <div className="absolute top-4 left-4 right-4 flex items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/90 backdrop-blur-md text-indigo-900 border border-white/50 shadow-sm">
-              {trip.travel_style || "Personalized Itinerary"}
+              {trip.travel_style || "Solo"}
             </span>
+            {trip.trip_theme && (
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-white/90 backdrop-blur-md text-orange-950 border border-white/50 shadow-sm">
+                {trip.trip_theme}
+              </span>
+            )}
             <span
               className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-md shadow-sm ${
                 trip.category === "Luxury"

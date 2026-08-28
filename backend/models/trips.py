@@ -14,6 +14,7 @@ class Trip(Base):
     category        = Column(String, nullable=False)
     daily_budget    = Column(Float, nullable=False)
     travel_style    = Column(String, nullable=False)
+    trip_theme      = Column(String, nullable=True, default="Cultural & Culinary")
     travel_month    = Column(String, nullable=False)
     ai_recommendation = Column(Text, nullable=False)
     created_at      = Column(DateTime, default=datetime.datetime.now)

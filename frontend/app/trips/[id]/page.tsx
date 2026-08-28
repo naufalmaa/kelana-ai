@@ -9,7 +9,7 @@ import { getTrip } from "@/services/tripService";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { TripDetailView } from "@/components/TripDetailView";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, getDestinationFlag } from "@/lib/utils";
 
 export default function TripDetailPage() {
   const routeParams = useParams();
@@ -44,7 +44,8 @@ export default function TripDetailPage() {
               currency: "USD",
               category: "Standard",
               daily_budget: 400,
-              travel_style: "Cultural & Sightseeing",
+              travel_style: "Solo",
+              trip_theme: "Cultural & Culinary",
               travel_month: "April",
               ai_recommendation: JSON.stringify({
                 trip_overview: "A 5-day cultural and modern exploration of Tokyo and surrounding historic sites in Japan.",
@@ -197,14 +198,20 @@ export default function TripDetailPage() {
                   <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">
                     Trip #{trip.id}
                   </span>
-                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-0.5">
-                    {trip.destination}, {trip.country}
+                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-0.5 flex items-center gap-2">
+                    <span>{getDestinationFlag(trip.destination, trip.country)}</span>
+                    <span>{trip.destination}, {trip.country}</span>
                   </h1>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    {trip.travel_style || "Personalized Itinerary"}
+                    {trip.travel_style || "Solo"}
                   </span>
+                  {trip.trip_theme && (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-orange-50 text-orange-800 border border-orange-200">
+                      {trip.trip_theme}
+                    </span>
+                  )}
                 </div>
               </div>
 

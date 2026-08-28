@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from services.trip_services import calculate_daily_budget, get_trip_category, get_transport_recommendation, get_recommended_places, get_travel_season
 from services.bedrock_service import get_ai_recommendation
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 from database import init_db, SessionLocal
 from models.trips import Trip
@@ -24,7 +24,8 @@ class TripRequest (BaseModel):
     days: int
     budget: float
     currency: str
-    travel_style: str
+    travel_style: str = "Solo"
+    trip_theme: Optional[str] = "Cultural & Culinary"
     travel_month: str
 
 app = FastAPI()
@@ -86,6 +87,7 @@ def create_trip(request: TripRequest):
         days=days,
         budget=budget,
         travel_style=request.travel_style,
+        trip_theme=request.trip_theme,
         travel_month=request.travel_month,
         currency=request.currency,
     )
@@ -97,6 +99,7 @@ def create_trip(request: TripRequest):
         budget=budget,
         currency=request.currency,
         travel_style=request.travel_style,
+        trip_theme=request.trip_theme or "Cultural & Culinary",
         travel_month=request.travel_month,
         category=category,
         daily_budget=daily_budget,
@@ -142,6 +145,7 @@ def create_trip_ai(request: TripRequest, trip_id: int):
         days=days,
         budget=budget,
         travel_style=request.travel_style,
+        trip_theme=request.trip_theme,
         travel_month=request.travel_month,
         currency=request.currency,
     )
@@ -154,6 +158,7 @@ def create_trip_ai(request: TripRequest, trip_id: int):
         budget=budget,
         currency=request.currency,
         travel_style=request.travel_style,
+        trip_theme=request.trip_theme or "Cultural & Culinary",
         travel_month=request.travel_month,
         category=category,
         daily_budget=daily_budget,
@@ -198,6 +203,7 @@ def update_trip(trip_id: int, request: TripRequest):
     trip.budget = request.budget
     trip.currency = request.currency
     trip.travel_style = request.travel_style
+    trip.trip_theme = request.trip_theme or "Cultural & Culinary"
     trip.travel_month = request.travel_month
 
     trip.category = get_trip_category(request.budget)

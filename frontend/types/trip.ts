@@ -43,6 +43,7 @@ export interface Trip {
   category: string;
   daily_budget: number;
   travel_style: string;
+  trip_theme?: string;
   travel_month: string;
   ai_recommendation: string;
   created_at?: string;
@@ -54,7 +55,8 @@ export interface TripFormData {
   days: number;
   budget: number;
   currency: string;
-  travel_style: string;
+  travel_style: "Solo" | "Family" | "Couple" | string;
+  trip_theme: "Cultural & Culinary" | "Relaxed & Nature" | "Adventure & Outdoors" | "Luxury & Sightseeing" | string;
   travel_month: string;
 }
 

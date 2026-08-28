@@ -9,7 +9,8 @@ export const PRESET_TRIPS: PresetDestination[] = [
     days: 7,
     budget: 2500,
     currency: "USD",
-    travel_style: "Cultural & Culinary",
+    travel_style: "Solo",
+    trip_theme: "Cultural & Culinary",
     travel_month: "April",
     image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=800&auto=format&fit=crop",
     tagline: "Cherry blossoms, neon streets & Michelin dining",
@@ -22,7 +23,8 @@ export const PRESET_TRIPS: PresetDestination[] = [
     days: 5,
     budget: 8000000,
     currency: "IDR",
-    travel_style: "Relaxed & Nature",
+    travel_style: "Solo",
+    trip_theme: "Relaxed & Nature",
     travel_month: "August",
     image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=800&auto=format&fit=crop",
     tagline: "Tropical beaches, lush rice terraces & sacred temples",
@@ -35,7 +37,8 @@ export const PRESET_TRIPS: PresetDestination[] = [
     days: 6,
     budget: 3200,
     currency: "EUR",
-    travel_style: "Luxury & Sightseeing",
+    travel_style: "Couple",
+    trip_theme: "Luxury & Sightseeing",
     travel_month: "October",
     image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop",
     tagline: "Art galleries, haute couture & Seine cruises",
@@ -48,7 +51,8 @@ export const PRESET_TRIPS: PresetDestination[] = [
     days: 8,
     budget: 4500,
     currency: "USD",
-    travel_style: "Adventure & Outdoors",
+    travel_style: "Family",
+    trip_theme: "Adventure & Outdoors",
     travel_month: "July",
     image: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=800&auto=format&fit=crop",
     tagline: "Alpine vistas, turquoise lakes & mountain peaks",
@@ -88,11 +92,20 @@ export const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-export const STYLES = [
-  "Backpacker",
+// 1. Travel Party / Companion Style (Solo, Family, Couple only)
+export const TRAVEL_STYLES = [
+  "Solo",
+  "Couple",
+  "Family",
+];
+
+// 2. Trip Theme / Activity Focus Parameter
+export const TRIP_THEMES = [
   "Cultural & Culinary",
   "Relaxed & Nature",
   "Adventure & Outdoors",
   "Luxury & Sightseeing",
-  "Family Friendly",
 ];
+
+// Backward-compatible alias
+export const STYLES = TRAVEL_STYLES;

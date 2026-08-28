@@ -55,6 +55,7 @@ def get_ai_recommendation(
     travel_style: str,
     travel_month: str,
     currency: str = "USD",
+    trip_theme: Optional[str] = "Cultural & Culinary",
     model_id: Optional[str] = None,
 ) -> str:
     """
@@ -74,8 +75,11 @@ Trip Parameters:
 - Destination: {destination}, {country}
 - Duration: {days} days
 - Total Budget: {currency} {budget}
-- Travel Style: {travel_style}
+- Travel Party / Companion Style: {travel_style} (e.g. Solo, Couple, or Family)
+- Trip Theme & Activity Focus: {trip_theme or 'Cultural & Culinary'} (e.g. Cultural & Culinary, Relaxed & Nature, Adventure & Outdoors, Luxury & Sightseeing)
 - Travel Month / Season: {travel_month}
+
+Ensure that the itinerary and recommendations are specifically customized for a {travel_style} traveler focusing on {trip_theme or 'Cultural & Culinary'}.
 
 You MUST return your entire output STRICTLY as a single valid JSON object. Do not include any explanations or commentary outside of the JSON.
 
