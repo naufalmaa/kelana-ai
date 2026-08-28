@@ -1,24 +1,28 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 from services.trip_services import calculate_daily_budget, get_trip_category, get_transport_recommendation, get_recommended_places, get_travel_season
 from services.bedrock_service import get_ai_recommendation
-from typing import List, Optional
+from services.auth_service import (
+    register_user,
+    authenticate_user,
+    get_current_user,
+    get_optional_current_user,
+    oauth2_scheme,
+)
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
-from database import init_db, SessionLocal
+from database import init_db, SessionLocal, get_db
 from models.trips import Trip
+from models.users import Users, User
 
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-# """
-# KelanaAI - Trip Summary Generator
-# Sesi 4: Integrasi FastAPI dengan Database PostgreSQL
-# """
-
-class TripRequest (BaseModel):
-
+# Pydantic Schemas
+class TripRequest(BaseModel):
     destination: str
     country: str
     days: int
@@ -28,7 +32,19 @@ class TripRequest (BaseModel):
     trip_theme: Optional[str] = "Cultural & Culinary"
     travel_month: str
 
-app = FastAPI()
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+app = FastAPI(title="KelanaAI API", version="1.0.0")
 
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
@@ -40,19 +56,85 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize database schema & seed accounts
 init_db()
+
 
 @app.get("/")
 def home():
     return {
-        "message":"Welcome to KelanaAI"
+        "message": "Welcome to KelanaAI API"
     }
+
 
 @app.get("/health")
 def health():
     return {
-        "status":"OK"
+        "status": "OK"
     }
+
+
+# -------------------------------------------------------------
+# AUTHENTICATION ENDPOINTS (Part 3 & Part 4)
+# -------------------------------------------------------------
+
+@app.post("/api/v1/auth/register", status_code=status.HTTP_201_CREATED)
+def register(request: RegisterRequest, db: Session = Depends(get_db)):
+    """
+    POST /api/v1/auth/register
+    Register a new user. Never stores plain text passwords - hashes them with bcrypt.
+    """
+    user = register_user(
+        db=db,
+        name=request.name,
+        email=request.email,
+        password=request.password,
+    )
+    return {
+        "message": "User registered successfully",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+        }
+    }
+
+
+@app.post("/api/v1/auth/login")
+def login(request: LoginRequest, db: Session = Depends(get_db)):
+    """
+    POST /api/v1/auth/login
+    Verify user credentials and return a signed JWT access token.
+    """
+    return authenticate_user(
+        db=db,
+        email=request.email,
+        password=request.password,
+    )
+
+
+@app.get("/api/v1/auth/me")
+def get_current_user_profile(
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    GET /api/v1/auth/me
+    Returns current authenticated user details and total generated trips count.
+    """
+    total_trips = db.query(Trip).filter(Trip.users_id == user.id).count()
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "created_at": user.created_at,
+        "total_trips": total_trips,
+    }
+
+
+# -------------------------------------------------------------
+# STATIC & UTILITY ENDPOINTS
+# -------------------------------------------------------------
 
 @app.get("/api/v1/trip_categories")
 def trip_categories():
@@ -62,11 +144,13 @@ def trip_categories():
         "Luxury"
     ]
 
+
 @app.get("/api/v1/recommendations")
 def recommendations():
     return [
         "Tokyo Tower", "Mount Fuji", "Shibuya"
     ]
+
 
 @app.get("/api/v1/transportations")
 def transportations():
@@ -74,8 +158,21 @@ def transportations():
         "Bus", "Train", "Flight"
     ]
 
+
+# -------------------------------------------------------------
+# PROTECTED TRIP ENDPOINTS (Part 5 & Part 6)
+# -------------------------------------------------------------
+
 @app.post("/api/v1/trips")
-def create_trip(request: TripRequest):
+def create_trip(
+    request: TripRequest,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    POST /api/v1/trips
+    Creates a new trip belonging to the authenticated user (users_id extracted from JWT).
+    """
     days = request.days
     budget = request.budget
     daily_budget = calculate_daily_budget(budget, days)
@@ -103,99 +200,92 @@ def create_trip(request: TripRequest):
         travel_month=request.travel_month,
         category=category,
         daily_budget=daily_budget,
+        users_id=user.id,
         ai_recommendation=ai_recommendation
     )
 
-    db = SessionLocal()
     db.add(trip)
     db.commit()
     db.refresh(trip)
-    db.close()
 
     return trip
 
+
 @app.get("/api/v1/trips")
-def list_trips():
-    db = SessionLocal()
-    trips = db.query(Trip).all()
-    db.close()
+def list_trips(
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    GET /api/v1/trips
+    Retrieves all personalized trips created by the currently authenticated user.
+    """
+    trips = db.query(Trip).filter(Trip.users_id == user.id).order_by(Trip.id.desc()).all()
     return trips
 
 
 @app.get("/api/v1/trips/{trip_id}")
-def get_trip(trip_id: int):
-    db = SessionLocal()
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
-    db.close()
-    # handling not found
+def get_trip(
+    trip_id: int,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    GET /api/v1/trips/{trip_id}
+    Retrieves a single trip if owned by the authenticated user.
+    """
+    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.users_id == user.id).first()
+
     if trip is None:
-        raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} is not found")
-    return trip
-
-@app.post("/api/v1/trips/{trip_id}/generate")
-def create_trip_ai(request: TripRequest, trip_id: int):
-    days = request.days
-    budget = request.budget
-    daily_budget = calculate_daily_budget(budget, days)
-    category = get_trip_category(budget)
-
-    ai_recommendation = get_ai_recommendation(
-        destination=request.destination,
-        country=request.country,
-        days=days,
-        budget=budget,
-        travel_style=request.travel_style,
-        trip_theme=request.trip_theme,
-        travel_month=request.travel_month,
-        currency=request.currency,
-    )
-
-    trip = Trip(
-        id=trip_id,
-        destination=request.destination,
-        country=request.country,
-        days=days,
-        budget=budget,
-        currency=request.currency,
-        travel_style=request.travel_style,
-        trip_theme=request.trip_theme or "Cultural & Culinary",
-        travel_month=request.travel_month,
-        category=category,
-        daily_budget=daily_budget,
-        ai_recommendation=ai_recommendation
-    )
-
-    db = SessionLocal()
-    db.add(trip)
-    db.commit()
-    db.refresh(trip)
-    db.close()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Trip with id {trip_id} was not found or does not belong to your account."
+        )
 
     return trip
+
 
 @app.delete("/api/v1/trips/{trip_id}")
-def delete_trip(trip_id: int):
-    db = SessionLocal()
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+def delete_trip(
+    trip_id: int,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    DELETE /api/v1/trips/{trip_id}
+    Deletes a trip if owned by the authenticated user.
+    """
+    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.users_id == user.id).first()
 
-    # handling not found
     if trip is None:
-        raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} is not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Trip with id {trip_id} was not found or does not belong to your account."
+        )
 
     db.delete(trip)
     db.commit()
-    db.close()
-
-    return trip
+    return {"message": f"Trip with id {trip_id} has been deleted successfully."}
 
 
 @app.put("/api/v1/trips/{trip_id}")
-def update_trip(trip_id: int, request: TripRequest):
-    db = SessionLocal()
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+def update_trip(
+    trip_id: int,
+    request: TripRequest,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    PUT /api/v1/trips/{trip_id}
+    Updates an existing trip owned by the authenticated user.
+    """
+    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.users_id == user.id).first()
     
     if trip is None:
-        raise HTTPException(status_code=404, detail=f"Trip with id {trip_id} is not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Trip with id {trip_id} was not found or does not belong to your account."
+        )
     
     trip.destination = request.destination
     trip.country = request.country
@@ -211,5 +301,4 @@ def update_trip(trip_id: int, request: TripRequest):
     
     db.commit()
     db.refresh(trip)
-    db.close()
     return trip

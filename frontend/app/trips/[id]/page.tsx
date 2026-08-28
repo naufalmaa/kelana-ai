@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, RotateCw, AlertCircle } from "lucide-react";
 import { Trip } from "@/types/trip";
 import { getTrip } from "@/services/tripService";
+import { useAuth } from "@/context/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { TripDetailView } from "@/components/TripDetailView";
@@ -13,6 +14,7 @@ import { formatCurrency, getDestinationFlag } from "@/lib/utils";
 
 export default function TripDetailPage() {
   const routeParams = useParams();
+  const { isAuthenticated, openAuthModal } = useAuth();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,7 @@ export default function TripDetailPage() {
       .then((data) => {
         if (isMounted) {
           setTrip(data);
+          setError(null);
         }
       })
       .catch((err) => {
@@ -181,13 +184,22 @@ export default function TripDetailPage() {
             <AlertCircle className="h-10 w-10 text-rose-500 mx-auto mb-3" />
             <h2 className="text-lg font-black text-rose-900">Trip Not Found</h2>
             <p className="text-xs text-rose-700 mt-1 mb-6">{error}</p>
-            <Link
-              href="/trips"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Return to Trip History
-            </Link>
+            {error.toLowerCase().includes("credentials") || !isAuthenticated ? (
+              <button
+                onClick={() => openAuthModal("login")}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                <span>Sign In to Access Itinerary</span>
+              </button>
+            ) : (
+              <Link
+                href="/trips"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Return to Trip History
+              </Link>
+            )}
           </div>
         ) : trip ? (
           <div className="space-y-6">

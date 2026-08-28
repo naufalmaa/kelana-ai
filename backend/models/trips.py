@@ -1,3 +1,4 @@
+from sqlalchemy import ForeignKey
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text
 from database import Base
 import datetime
@@ -6,6 +7,7 @@ class Trip(Base):
     __tablename__   = "trips"
 
     id              = Column(Integer, primary_key=True, index=True)
+    users_id        = Column(Integer, ForeignKey("users.id"), nullable=False, default=1)
     destination     = Column(String, nullable=False)
     country         = Column(String, nullable=False)
     days            = Column(Integer, nullable=False)
