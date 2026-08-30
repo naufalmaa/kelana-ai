@@ -218,8 +218,11 @@ def get_current_user_from_token(token: Optional[str], db: Session) -> Optional[U
 
 def seed_superadmin(db: Session) -> Users:
     """
-    Ensure the superadmin account (superadmin@gmail.com / superadmin) exists in database.
+    Ensure default accounts exist in database:
+    - superadmin@gmail.com / superadmin
+    - alice@gmail.com / alice
     """
+    # 1. Super Admin
     admin_email = "superadmin@gmail.com"
     admin_password = "superadmin"
     admin = db.query(Users).filter(Users.email == admin_email).first()
@@ -235,11 +238,32 @@ def seed_superadmin(db: Session) -> Users:
         db.refresh(admin)
         print(f"[Seed] Created superadmin: {admin_email} (ID: {admin.id})")
     else:
-        # Verify if password hash is valid, update if not
         if not verify_password(admin_password, admin.password_hash):
             admin.password_hash = hash_password(admin_password)
             db.commit()
             db.refresh(admin)
             print(f"[Seed] Updated superadmin password hash: {admin_email}")
+
+    # 2. Alice
+    alice_email = "alice@gmail.com"
+    alice_password = "alice"
+    alice = db.query(Users).filter(Users.email == alice_email).first()
+
+    if not alice:
+        alice = Users(
+            name="Alice",
+            email=alice_email,
+            password_hash=hash_password(alice_password)
+        )
+        db.add(alice)
+        db.commit()
+        db.refresh(alice)
+        print(f"[Seed] Created alice: {alice_email} (ID: {alice.id})")
+    else:
+        if not verify_password(alice_password, alice.password_hash):
+            alice.password_hash = hash_password(alice_password)
+            db.commit()
+            db.refresh(alice)
+            print(f"[Seed] Updated alice password hash: {alice_email}")
 
     return admin

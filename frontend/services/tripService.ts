@@ -63,6 +63,26 @@ export async function generateTrip(
   return res.json();
 }
 
+export async function updateTrip(
+  id: number | string,
+  data: TripFormData | Record<string, unknown>,
+  tokenOverride?: string
+): Promise<Trip> {
+  const headers = getAuthHeaders(tokenOverride);
+  const res = await fetch(`${API_URL}/trips/${id}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(
+      errorData.detail || `Failed to update trip #${id} (${res.status})`
+    );
+  }
+  return res.json();
+}
+
 export async function deleteTrip(id: number | string, tokenOverride?: string): Promise<{ message: string }> {
   const headers = getAuthHeaders(tokenOverride);
   const res = await fetch(`${API_URL}/trips/${id}`, {

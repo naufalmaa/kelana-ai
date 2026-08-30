@@ -80,7 +80,7 @@ const DEFAULT_PREVIEW_TRIP: Trip = {
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated, isHydrated, openAuthModal } = useAuth();
 
   const [formData, setFormData] = useState<TripFormData>({
     destination: "Tokyo",
@@ -554,6 +554,12 @@ export default function Home() {
                       <RotateCw className="h-5 w-5 animate-spin" />
                       <span>Generating AI Itinerary...</span>
                     </>
+                  ) : !isHydrated ? (
+                    <>
+                      <Sparkles className="h-5 w-5 text-amber-300" />
+                      <span>Plan Your Itinerary</span>
+                      <ArrowRight className="h-5 w-5 ml-1" />
+                    </>
                   ) : !isAuthenticated ? (
                     <>
                       <Lock className="h-5 w-5 text-indigo-200" />
@@ -572,7 +578,7 @@ export default function Home() {
             </div>
 
             {/* Saved Itineraries Card using reusable TripCard */}
-            {isAuthenticated ? (
+            {isHydrated && isAuthenticated ? (
               <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-xs">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">

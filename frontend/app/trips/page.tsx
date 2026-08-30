@@ -29,7 +29,7 @@ export type SortMode = "latest" | "oldest" | "highest_budget" | "lowest_budget";
 const ITEMS_PER_PAGE = 6;
 
 export default function TripsHistoryPage() {
-  const { isAuthenticated, isLoading: authLoading, openAuthModal } = useAuth();
+  const { isAuthenticated, isHydrated, isLoading: authLoading, openAuthModal } = useAuth();
 
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -164,7 +164,7 @@ export default function TripsHistoryPage() {
               <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
                 Trip History
               </h1>
-              {isAuthenticated && !loading && (
+              {isHydrated && isAuthenticated && !loading && (
                 <span className="text-sm sm:text-base font-bold text-slate-500">
                   {processedTrips.length}{" "}
                   {processedTrips.length === 1 ? "trip" : "trips"}
@@ -199,7 +199,7 @@ export default function TripsHistoryPage() {
         )}
 
         {/* Authentication State Handling */}
-        {authLoading ? (
+        {!isHydrated || authLoading ? (
           <div className="py-24 text-center space-y-3">
             <RotateCw className="h-8 w-8 animate-spin mx-auto text-indigo-600" />
             <p className="text-sm font-bold text-slate-700">Checking your account...</p>

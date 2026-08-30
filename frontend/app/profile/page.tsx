@@ -26,7 +26,7 @@ import { Footer } from "@/components/Footer";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { user: authUser, isAuthenticated, isLoading: authLoading, logout, openAuthModal } = useAuth();
+  const { user: authUser, isAuthenticated, isHydrated, isLoading: authLoading, logout, openAuthModal } = useAuth();
   const [profile, setProfile] = useState<User | null>(authUser);
 
   useEffect(() => {
@@ -62,7 +62,7 @@ export default function ProfilePage() {
       <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-        {authLoading ? (
+        {!isHydrated || authLoading ? (
           <div className="py-24 text-center space-y-3">
             <RotateCw className="h-8 w-8 animate-spin mx-auto text-indigo-600" />
             <p className="text-sm font-bold text-slate-700">Loading your profile...</p>

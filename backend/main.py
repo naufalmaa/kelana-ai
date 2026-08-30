@@ -233,13 +233,20 @@ def get_trip(
     """
     GET /api/v1/trips/{trip_id}
     Retrieves a single trip if owned by the authenticated user.
+    Returns 403 Forbidden if the trip belongs to another user.
     """
-    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.users_id == user.id).first()
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
 
     if trip is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Trip with id {trip_id} was not found or does not belong to your account."
+            detail=f"Trip with id {trip_id} was not found."
+        )
+
+    if trip.users_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: You do not have permission to access this trip."
         )
 
     return trip
@@ -254,13 +261,20 @@ def delete_trip(
     """
     DELETE /api/v1/trips/{trip_id}
     Deletes a trip if owned by the authenticated user.
+    Returns 403 Forbidden if the trip belongs to another user.
     """
-    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.users_id == user.id).first()
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
 
     if trip is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Trip with id {trip_id} was not found or does not belong to your account."
+            detail=f"Trip with id {trip_id} was not found."
+        )
+
+    if trip.users_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: You do not have permission to delete this trip."
         )
 
     db.delete(trip)
@@ -278,13 +292,20 @@ def update_trip(
     """
     PUT /api/v1/trips/{trip_id}
     Updates an existing trip owned by the authenticated user.
+    Returns 403 Forbidden if the trip belongs to another user.
     """
-    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.users_id == user.id).first()
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
     
     if trip is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Trip with id {trip_id} was not found or does not belong to your account."
+            detail=f"Trip with id {trip_id} was not found."
+        )
+
+    if trip.users_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: You do not have permission to update this trip."
         )
     
     trip.destination = request.destination
@@ -298,6 +319,17 @@ def update_trip(
 
     trip.category = get_trip_category(request.budget)
     trip.daily_budget = calculate_daily_budget(request.budget, request.days)
+    
+    trip.ai_recommendation = get_ai_recommendation(
+        destination=request.destination,
+        country=request.country,
+        days=request.days,
+        budget=request.budget,
+        travel_style=request.travel_style,
+        trip_theme=request.trip_theme,
+        travel_month=request.travel_month,
+        currency=request.currency,
+    )
     
     db.commit()
     db.refresh(trip)

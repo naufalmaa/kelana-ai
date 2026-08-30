@@ -2,22 +2,35 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { ArrowLeft, RotateCw, AlertCircle } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  RotateCw,
+  AlertCircle,
+  Edit3,
+  Trash2,
+  CheckCircle2,
+} from "lucide-react";
 import { Trip } from "@/types/trip";
-import { getTrip } from "@/services/tripService";
+import { getTrip, deleteTrip } from "@/services/tripService";
 import { useAuth } from "@/context/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { TripDetailView } from "@/components/TripDetailView";
+import { EditTripModal } from "@/components/EditTripModal";
 import { formatCurrency, getDestinationFlag } from "@/lib/utils";
 
 export default function TripDetailPage() {
+  const router = useRouter();
   const routeParams = useParams();
-  const { isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated, isHydrated, openAuthModal } = useAuth();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
 
   // Extract ID
   const tripId = routeParams?.id as string;
@@ -36,115 +49,7 @@ export default function TripDetailPage() {
       })
       .catch((err) => {
         if (isMounted) {
-          // If offline and testing demo ID 1 or preview
-          if (tripId === "1") {
-            setTrip({
-              id: 1,
-              destination: "Tokyo",
-              country: "Japan",
-              days: 5,
-              budget: 2000,
-              currency: "USD",
-              category: "Standard",
-              daily_budget: 400,
-              travel_style: "Solo",
-              trip_theme: "Cultural & Culinary",
-              travel_month: "April",
-              ai_recommendation: JSON.stringify({
-                trip_overview: "A 5-day cultural and modern exploration of Tokyo and surrounding historic sites in Japan.",
-                daily_itinerary: [
-                  {
-                    day: 1,
-                    title: "Historical Asakusa & Sumida River",
-                    morning: "Visit Asakusa and Senso-ji Temple, stroll along Nakamise-dori shopping street.",
-                    afternoon: "Walk to Tokyo Skytree for panoramic city views and Sumida park.",
-                    evening: "Dinner around Asakusa trying authentic tempura and riverside walk.",
-                    daily_tip: "Senso-ji is least crowded early in the morning before 9 AM.",
-                  },
-                  {
-                    day: 2,
-                    title: "Modern Shibuya & Harajuku Culture",
-                    morning: "Explore Shibuya Crossing, Hachiko statue, and Shibuya Sky observatory.",
-                    afternoon: "Walk through Yoyogi Park to Meiji Jingu Shrine and Takeshita Street.",
-                    evening: "Experience vibrant dining in Omoide Yokocho or Shibuya dining alleys.",
-                    daily_tip: "Get a Pasmo or Suica digital card for frictionless subway travel.",
-                  },
-                  {
-                    day: 3,
-                    title: "Traditional Architecture & Gardens",
-                    morning: "Imperial Palace East Gardens and Chidorigafuchi moat walk.",
-                    afternoon: "Explore Ginza district architecture, luxury boutiques, and art galleries.",
-                    evening: "Kabuki-za theater exterior and sushi dinner in Tsukiji Outer Market.",
-                  },
-                  {
-                    day: 4,
-                    title: "Tech, Gaming & Pop Culture",
-                    morning: "Akihabara electronics and anime district immersion.",
-                    afternoon: "Visit Ueno Park museums (Tokyo National Museum).",
-                    evening: "Ameyoko market street food and Izakaya experience.",
-                  },
-                  {
-                    day: 5,
-                    title: "Bayside Odaiba & Sunset Views",
-                    morning: "TeamLab digital art exhibition at Toyosu.",
-                    afternoon: "Odaiba Seaside Park, Rainbow Bridge views, and shopping malls.",
-                    evening: "Farewell dinner overlooking Tokyo Bay skyline.",
-                  },
-                ],
-                travel_tips: [
-                  {
-                    title: "Public Transit Navigation",
-                    tip: "Download Tokyo Subway Navigation app and keep your Suica/Pasmo card ready on Apple Wallet or Google Wallet.",
-                  },
-                  {
-                    title: "Spring Weather & Clothing",
-                    tip: "April temperatures range from 10°C to 19°C. Pack light layers and comfortable walking shoes for 15,000+ daily steps.",
-                  },
-                ],
-                food_recommendations: [
-                  {
-                    dish: "Authentic Edomae Sushi",
-                    description: "Freshly sliced seasonal fish served over seasoned sushi rice.",
-                    recommended_spot: "Tsukiji Outer Market, Chuo City",
-                  },
-                  {
-                    dish: "Tonkotsu Ramen",
-                    description: "Rich pork bone broth with firm noodles and tender chashu pork.",
-                    recommended_spot: "Ichiran Shibuya or Afuri Harajuku",
-                  },
-                ],
-                budget_breakdown: [
-                  {
-                    category: "Accommodation",
-                    percentage: 40,
-                    estimated_amount: 800,
-                    description: "Clean modern mid-scale hotel in Shinjuku or Asakusa.",
-                  },
-                  {
-                    category: "Food & Dining",
-                    percentage: 30,
-                    estimated_amount: 600,
-                    description: "Daily mix of casual ramen shops, conveyor sushi, and cafes.",
-                  },
-                  {
-                    category: "Activities & Sightseeing",
-                    percentage: 15,
-                    estimated_amount: 300,
-                    description: "Entry tickets to Tokyo Skytree, museums, and TeamLab.",
-                  },
-                  {
-                    category: "Transportation & Local Transit",
-                    percentage: 15,
-                    estimated_amount: 300,
-                    description: "Unlimited Tokyo subway passes and airport express transit.",
-                  },
-                ],
-              }),
-              created_at: new Date().toISOString(),
-            });
-          } else {
-            setError(err instanceof Error ? err.message : `Failed to load trip #${tripId}`);
-          }
+          setError(err instanceof Error ? err.message : `Failed to load trip #${tripId}`);
         }
       })
       .finally(() => {
@@ -158,13 +63,33 @@ export default function TripDetailPage() {
     };
   }, [tripId]);
 
+  const handleDelete = async () => {
+    if (!trip) return;
+    setIsDeleting(true);
+    try {
+      await deleteTrip(trip.id);
+      router.push("/trips");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete trip.";
+      setError(msg);
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleTripUpdated = (updated: Trip) => {
+    setTrip(updated);
+    setSuccessToast("Trip details updated successfully!");
+    setTimeout(() => setSuccessToast(null), 3000);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 selection:bg-indigo-600 selection:text-white">
       <Navbar />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
-        {/* Navigation Breadcrumb matching Part 5 slide */}
-        <div className="mb-6">
+        {/* Navigation Breadcrumb and Actions */}
+        <div className="flex items-center justify-between gap-4 mb-6">
           <Link
             href="/trips"
             className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-indigo-600 bg-white border border-slate-200 px-4 py-2 rounded-xl shadow-2xs hover:shadow-xs transition-all active:scale-95"
@@ -172,7 +97,79 @@ export default function TripDetailPage() {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Trips</span>
           </Link>
+
+          {trip && isHydrated && isAuthenticated && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsEditOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-indigo-600 text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
+              >
+                <Edit3 className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Edit Trip</span>
+              </button>
+
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-600 text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                <span>Delete</span>
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Success Toast */}
+        {successToast && (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span>{successToast}</span>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200 p-6 shadow-2xl space-y-4">
+              <div className="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-black text-slate-900">Delete This Trip?</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Are you sure you want to delete your trip to{" "}
+                  <span className="font-bold text-slate-800">{trip?.destination}</span>? This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={isDeleting}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-200 transition-all disabled:opacity-60 cursor-pointer"
+                >
+                  {isDeleting ? "Deleting..." : "Yes, Delete Trip"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Trip Modal */}
+        <EditTripModal
+          trip={trip}
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          onTripUpdated={handleTripUpdated}
+        />
 
         {loading ? (
           <div className="py-24 text-center flex flex-col items-center justify-center gap-3">

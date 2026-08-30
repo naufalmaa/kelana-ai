@@ -16,6 +16,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
+  isHydrated: boolean;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
@@ -31,8 +32,10 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => getStoredUser());
-  const [token, setToken] = useState<string | null>(() => getAuthToken());
+  // Start with null on both server and initial client render to avoid SSR hydration mismatches
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Modal State
@@ -40,11 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authModalMode, setAuthModalMode] = useState<"login" | "register">("login");
   const [onAuthSuccessCallback, setOnAuthSuccessCallback] = useState<(() => void) | null>(null);
 
-  // Revalidate session token with backend on mount
+  // Revalidate session token with backend after component mounts on client side
   useEffect(() => {
     const savedToken = getAuthToken();
+    const savedUser = getStoredUser();
 
     if (savedToken) {
+      setToken(savedToken);
+      if (savedUser) setUser(savedUser);
+
       getMeApi(savedToken)
         .then((fetchedUser) => {
           setUser(fetchedUser);
@@ -55,7 +62,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           removeStoredUser();
           setToken(null);
           setUser(null);
+        })
+        .finally(() => {
+          setIsHydrated(true);
         });
+    } else {
+      setIsHydrated(true);
     }
   }, []);
 
@@ -118,7 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         token,
-        isAuthenticated: !!token && !!user,
+        isAuthenticated: isHydrated && !!token && !!user,
+        isHydrated,
         isLoading,
         login,
         register,
