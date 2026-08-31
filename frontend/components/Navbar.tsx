@@ -4,6 +4,7 @@ import React, { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useAskAi } from "@/context/AskAiContext";
 import {
   Compass,
   Sparkles,
@@ -14,6 +15,8 @@ import {
   LogIn,
   User as UserIcon,
   ShieldCheck,
+  Bot,
+  MessageSquare,
 } from "lucide-react";
 
 export interface NavbarProps {
@@ -39,6 +42,7 @@ export function Navbar({
 }: NavbarProps) {
   const router = useRouter();
   const { user, isAuthenticated, logout, openAuthModal } = useAuth();
+  const { openChat } = useAskAi();
   const isHydrated = useHydrated();
 
   const handleLogout = () => {
@@ -87,6 +91,15 @@ export function Navbar({
               <History className="h-3.5 w-3.5" />
               <span>History</span>
             </Link>
+            {/* Ask AI in Header Navigator */}
+            <button
+              onClick={() => openChat()}
+              className="px-3 py-1.5 rounded-xl text-indigo-700 hover:text-indigo-800 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/70 transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <Bot className="h-3.5 w-3.5 text-indigo-600" />
+              <span>Ask AI</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </button>
             {isHydrated && isAuthenticated && (
               <Link
                 href="/profile"
@@ -101,6 +114,16 @@ export function Navbar({
 
         {/* Right Section: Status, Welcome Message, User Auth & Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Ask AI Button on mobile / quick action */}
+          <button
+            onClick={() => openChat()}
+            className="md:hidden flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl"
+            title="Ask AI Concierge"
+          >
+            <Bot className="h-3.5 w-3.5 text-indigo-600" />
+            <span>Ask AI</span>
+          </button>
+
           {/* System Status Indicator (Only if explicitly passed and hydrated) */}
           {isHydrated && backendOnline !== null && (
             <div

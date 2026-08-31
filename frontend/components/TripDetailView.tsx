@@ -26,9 +26,13 @@ import {
   Check,
   Navigation,
   Compass,
+  Bot,
+  MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { Trip, StructuredAiRecommendation } from "@/types/trip";
 import { getDestinationPhoto, formatCurrency, parseRecommendation } from "@/lib/utils";
+import { useAskAi } from "@/context/AskAiContext";
 
 export interface TripDetailViewProps {
   trip: Trip | null;
@@ -41,6 +45,7 @@ export function TripDetailView({
   emptyTitle = "No Itinerary Selected",
   emptySubtitle = "Fill in your travel destination on the left to generate a personalized itinerary, or select from your saved trips.",
 }: TripDetailViewProps) {
+  const { openChat } = useAskAi();
   const [copied, setCopied] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"all" | "itinerary" | "tips" | "food" | "budget">("all");
 
@@ -174,22 +179,39 @@ export function TripDetailView({
             </span>
           </div>
 
-          <button
-            onClick={handleCopyAiRecommendation}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-800 bg-white/90 hover:bg-white backdrop-blur-md rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
-          >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5 text-emerald-600" />
-                <span className="text-emerald-700">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5 text-slate-700" />
-                <span>Copy</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                openChat(
+                  `I am planning a trip to ${trip.destination}, ${trip.country} (${trip.days} days, budget: ${formatCurrency(trip.budget, trip.currency)}, style: ${trip.travel_style}). What are the best travel tips, attractions, and advice?`,
+                  true
+                )
+              }
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-900 bg-white/95 hover:bg-white backdrop-blur-md rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer border border-indigo-200/60"
+              title="Ask AI about this trip"
+            >
+              <Bot className="h-3.5 w-3.5 text-indigo-600" />
+              <span>Ask AI</span>
+              <Sparkles className="h-3 w-3 text-amber-500" />
+            </button>
+
+            <button
+              onClick={handleCopyAiRecommendation}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-800 bg-white/90 hover:bg-white backdrop-blur-md rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />
+                  <span className="text-emerald-700">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5 text-slate-700" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Destination Title on Hero Bottom */}
@@ -365,6 +387,21 @@ export function TripDetailView({
                               {dayItem.title}
                             </h4>
                           </div>
+
+                          <button
+                            onClick={() =>
+                              openChat(
+                                `What are detailed recommendations, transit options, and insider tips for Day ${dayItem.day} in ${trip.destination}, ${trip.country} (${dayItem.title})? Morning: ${dayItem.morning}, Afternoon: ${dayItem.afternoon}, Evening: ${dayItem.evening}.`,
+                                true
+                              )
+                            }
+                            className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/70 rounded-xl transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0"
+                            title={`Ask AI for tips on Day ${dayItem.day}`}
+                          >
+                            <Bot className="h-3 w-3 text-indigo-600" />
+                            <span className="hidden sm:inline">Ask AI for Day {dayItem.day}</span>
+                            <span className="sm:hidden">Ask AI</span>
+                          </button>
                         </div>
 
                         {/* Activity Grid */}
@@ -611,6 +648,39 @@ export function TripDetailView({
             </div>
           </div>
         )}
+
+        {/* Ask AI Concierge Callout Banner */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-900 via-indigo-950 to-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-indigo-950/20">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="h-10 w-10 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 text-amber-300 flex items-center justify-center shrink-0">
+              <Bot className="h-6 w-6" />
+            </div>
+            <div>
+              <h4 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                <span>Have questions about this {trip.destination} trip?</span>
+                <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Bedrock RAG
+                </span>
+              </h4>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Ask our AI concierge for customized transit advice, packing essentials, or restaurant bookings.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() =>
+              openChat(
+                `Can you provide more specific recommendations, transit tips, and local secrets for ${trip.destination}, ${trip.country}?`,
+                true
+              )
+            }
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            <Sparkles className="h-4 w-4 text-amber-300" />
+            <span>Ask AI About This Trip</span>
+          </button>
+        </div>
 
         {/* Card Footer */}
         {trip.created_at && (

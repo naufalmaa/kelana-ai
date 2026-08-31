@@ -10,6 +10,7 @@ from services.auth_service import (
     get_optional_current_user,
     oauth2_scheme,
 )
+from services.kb_service import ask_knowledge_base
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from database import init_db, SessionLocal, get_db
@@ -42,6 +43,9 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+class QuestionRequest(BaseModel):
+    question: str
 
 
 app = FastAPI(title="KelanaAI API", version="1.0.0")
@@ -334,3 +338,20 @@ def update_trip(
     db.commit()
     db.refresh(trip)
     return trip
+
+@app.post("/api/v1/ask")
+def ask_endpoint(request: QuestionRequest):
+    result = ask_knowledge_base(request.question)
+
+    if isinstance(result, dict):
+        return {
+            "question": request.question,
+            "answer": result.get("answer", ""),
+            "source_documents": result.get("source_documents", [])
+        }
+
+    return {
+        "question": request.question,
+        "answer": result,
+        "source_documents": []
+    }
