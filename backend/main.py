@@ -8,7 +8,7 @@ from services.auth_service import (
     authenticate_user,
     get_current_user,
     get_optional_current_user,
-    oauth2_scheme,
+    security,
 )
 from services.kb_service import ask_knowledge_base
 from typing import List, Optional, Dict, Any

@@ -9,7 +9,7 @@ import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from models.users import Users
 from database import get_db
@@ -19,8 +19,13 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "kelana_ai_jwt_secret_key_2026_super_se
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 
-# OAuth2 scheme for token extraction from Authorization: Bearer <token>
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
+# HTTP Bearer scheme for token extraction from Authorization: Bearer <token>
+# Using HTTPBearer allows Swagger UI (/docs) to authorize directly with the access_token
+security = HTTPBearer(
+    auto_error=False,
+    description="Enter access_token obtained from /api/v1/auth/login",
+)
+oauth2_scheme = security  # Alias for backward compatibility
 
 
 def hash_password(password: str) -> str:
@@ -143,7 +148,7 @@ def authenticate_user(db: Session, email: str, password: str) -> Dict[str, Any]:
 
 
 def get_current_user(
-    token: Optional[str] = Depends(oauth2_scheme),
+    auth: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> Users:
     """
@@ -155,8 +160,12 @@ def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    if not token:
+    if not auth or not auth.credentials:
         raise credentials_exception
+
+    token = auth.credentials.strip()
+    if token.lower().startswith("bearer "):
+        token = token[7:].strip()
 
     payload = decode_access_token(token)
     if not payload:
@@ -176,15 +185,20 @@ def get_current_user(
 
 
 def get_optional_current_user(
-    token: Optional[str] = Depends(oauth2_scheme),
+    auth: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> Optional[Users]:
     """
     Optional FastAPI Dependency for endpoints that can serve both guests and logged in users.
     Returns User if valid token is provided, None otherwise.
     """
-    if not token:
+    if not auth or not auth.credentials:
         return None
+
+    token = auth.credentials.strip()
+    if token.lower().startswith("bearer "):
+        token = token[7:].strip()
+
     payload = decode_access_token(token)
     if not payload:
         return None
