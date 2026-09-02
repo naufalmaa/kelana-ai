@@ -32,6 +32,7 @@ def init_db() -> None:
     # Import models so metadata is registered
     import models.users # noqa
     import models.trips # noqa
+    import models.conversations # noqa
 
     Base.metadata.create_all(bind=engine)
     try:

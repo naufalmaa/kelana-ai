@@ -298,6 +298,11 @@ Requirements:
                     "content": [{"text": prompt}],
                 }
             ],
+            inferenceConfig={
+                "maxTokens": 4096,
+                "temperature": 0.7,
+                "topP": 0.9,
+            },
         )
 
         output_message = response.get("output", {}).get("message", {})

@@ -51,7 +51,7 @@ export function Navbar({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all">
+    <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-slate-200/80 transition-all shrink-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
         {/* Brand / Logo */}
         <div className="flex items-center gap-3 sm:gap-6">
@@ -85,21 +85,20 @@ export function Navbar({
               <span>Planner</span>
             </Link>
             <Link
+              href="/chat"
+              className="px-3 py-1.5 rounded-xl text-indigo-700 hover:text-indigo-800 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/70 transition-all flex items-center gap-1.5 font-bold"
+            >
+              <MessageSquare className="h-3.5 w-3.5 text-indigo-600" />
+              <span>AI Chat</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </Link>
+            <Link
               href="/trips"
               className="px-3 py-1.5 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-indigo-600 transition-colors flex items-center gap-1.5"
             >
               <History className="h-3.5 w-3.5" />
               <span>History</span>
             </Link>
-            {/* Ask AI in Header Navigator */}
-            <button
-              onClick={() => openChat()}
-              className="px-3 py-1.5 rounded-xl text-indigo-700 hover:text-indigo-800 bg-indigo-50/80 hover:bg-indigo-100 border border-indigo-200/70 transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <Bot className="h-3.5 w-3.5 text-indigo-600" />
-              <span>Ask AI</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            </button>
             {isHydrated && isAuthenticated && (
               <Link
                 href="/profile"

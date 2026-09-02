@@ -49,7 +49,7 @@ export function AskAiFloatingWidget() {
 
   const [inputVal, setInputVal] = useState("");
   const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({});
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync pending question from context (e.g. triggered from Itinerary button)
@@ -64,8 +64,11 @@ export function AskAiFloatingWidget() {
 
   // Auto-scroll to bottom on message updates
   useEffect(() => {
-    if (isOpen && !isMinimized) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isOpen && !isMinimized && messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
   }, [messages, isOpen, isMinimized, isLoading]);
 
@@ -186,7 +189,10 @@ export function AskAiFloatingWidget() {
           {!isMinimized && (
             <>
               {/* Messages Scroll Area */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 custom-scrollbar bg-slate-50/60">
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 custom-scrollbar bg-slate-50/60"
+              >
                 {messages.map((msg, index) => {
                   const isUser = msg.role === "user";
                   return (
@@ -364,8 +370,6 @@ export function AskAiFloatingWidget() {
                     </div>
                   </div>
                 )}
-
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Input Form */}

@@ -159,7 +159,7 @@ def ask_knowledge_base(
             ],
             inferenceConfig={
                 "temperature": 0.5,
-                "maxTokens": 1000,
+                "maxTokens": 2048,
             },
         )
 

@@ -11,11 +11,20 @@ from services.auth_service import (
     security,
 )
 from services.kb_service import ask_knowledge_base
+from services.conversations_service import (
+    create_conversation,
+    list_conversations,
+    get_conversation_with_messages,
+    rename_conversation,
+    delete_conversation,
+    orchestrate_send_message,
+)
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from database import init_db, SessionLocal, get_db
 from models.trips import Trip
 from models.users import Users, User
+from models.conversations import Conversation, Message
 
 from dotenv import load_dotenv
 import os
@@ -46,6 +55,15 @@ class LoginRequest(BaseModel):
 
 class QuestionRequest(BaseModel):
     question: str
+
+class CreateConversationRequest(BaseModel):
+    title: Optional[str] = None
+
+class RenameConversationRequest(BaseModel):
+    title: str
+
+class SendMessageRequest(BaseModel):
+    content: str
 
 
 app = FastAPI(title="KelanaAI API", version="1.0.0")
@@ -355,3 +373,100 @@ def ask_endpoint(request: QuestionRequest):
         "answer": result,
         "source_documents": []
     }
+
+
+# -------------------------------------------------------------
+# CONVERSATIONS & CHAT ENDPOINTS (Part 4, 5, 6, 7 & Bonus)
+# -------------------------------------------------------------
+
+@app.post("/api/v1/conversations", status_code=status.HTTP_201_CREATED)
+def create_new_conversation(
+    request: Optional[CreateConversationRequest] = None,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    POST /api/v1/conversations
+    Creates a new conversation thread for the authenticated user.
+    """
+    title = request.title if request else None
+    conv = create_conversation(db=db, user=user, title=title)
+    return conv.to_dict()
+
+
+@app.get("/api/v1/conversations")
+def get_user_conversations(
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    GET /api/v1/conversations
+    Lists all conversation threads belonging to the authenticated user.
+    """
+    return list_conversations(db=db, user=user)
+
+
+@app.get("/api/v1/conversations/{conversation_id}")
+def get_single_conversation(
+    conversation_id: int,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    GET /api/v1/conversations/{conversation_id}
+    Retrieves full conversation details and its chronological message history.
+    """
+    return get_conversation_with_messages(db=db, conversation_id=conversation_id, user=user)
+
+
+@app.patch("/api/v1/conversations/{conversation_id}")
+def update_conversation_title(
+    conversation_id: int,
+    request: RenameConversationRequest,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    PATCH /api/v1/conversations/{conversation_id}
+    Renames a conversation (Bonus Challenge).
+    """
+    return rename_conversation(db=db, conversation_id=conversation_id, user=user, new_title=request.title)
+
+
+@app.delete("/api/v1/conversations/{conversation_id}")
+def remove_conversation(
+    conversation_id: int,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    DELETE /api/v1/conversations/{conversation_id}
+    Deletes a conversation thread and all its messages.
+    """
+    return delete_conversation(db=db, conversation_id=conversation_id, user=user)
+
+
+@app.post("/api/v1/conversations/{conversation_id}/messages")
+def send_message_in_conversation(
+    conversation_id: int,
+    request: SendMessageRequest,
+    user: Users = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    POST /api/v1/conversations/{conversation_id}/messages
+    Part 4 Orchestration Pipeline:
+    1. Receive User Message
+    2. Save User Message
+    3. Load Previous Messages
+    4. Build Context-Aware Prompt
+    5. Amazon Bedrock Invocation
+    6. Save AI Response
+    7. Return Response
+    """
+    return orchestrate_send_message(
+        db=db,
+        conversation_id=conversation_id,
+        user=user,
+        user_content=request.content,
+    )

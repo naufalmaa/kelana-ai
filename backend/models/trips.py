@@ -1,5 +1,5 @@
-from sqlalchemy import ForeignKey
-from sqlalchemy import Column, Integer, String, Float, DateTime, Text
+from sqlalchemy import ForeignKey, Column, Integer, String, Float, DateTime, Text
+from sqlalchemy.orm import relationship
 from database import Base
 import datetime
 
@@ -20,3 +20,5 @@ class Trip(Base):
     travel_month    = Column(String, nullable=False)
     ai_recommendation = Column(Text, nullable=False)
     created_at      = Column(DateTime, default=datetime.datetime.now)
+
+    user            = relationship("Users", back_populates="trips")
