@@ -21,8 +21,11 @@ import {
   HelpCircle,
   Compass,
   ArrowRight,
+  Lock,
+  LogIn,
 } from "lucide-react";
 import { useAskAi } from "@/context/AskAiContext";
+import { useAuth } from "@/context/AuthContext";
 import { SourceDocument } from "@/types/ai";
 
 const QUICK_PROMPTS = [
@@ -33,6 +36,7 @@ const QUICK_PROMPTS = [
 ];
 
 export function AskAiFloatingWidget() {
+  const { isAuthenticated, openAuthModal } = useAuth();
   const {
     isOpen,
     isMinimized,
@@ -109,7 +113,13 @@ export function AskAiFloatingWidget() {
       {/* 1. Floating Action Button (Bottom-Right) */}
       <div className="fixed bottom-6 right-6 z-50 flex items-center">
         <button
-          onClick={toggleChat}
+          onClick={() => {
+            if (!isAuthenticated) {
+              openAuthModal("login");
+              return;
+            }
+            toggleChat();
+          }}
           aria-label="Toggle Ask AI Travel Concierge"
           className="group relative flex items-center gap-2.5 px-4 py-3.5 sm:px-5 sm:py-4 rounded-full bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm shadow-xl shadow-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/40 active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
         >
@@ -188,7 +198,28 @@ export function AskAiFloatingWidget() {
           {/* Body Content (if not minimized) */}
           {!isMinimized && (
             <>
-              {/* Messages Scroll Area */}
+              {!isAuthenticated ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-slate-50/80">
+                  <div className="h-16 w-16 rounded-3xl bg-indigo-100/80 border border-indigo-200/60 text-indigo-600 flex items-center justify-center mb-4 shadow-inner">
+                    <Lock className="h-8 w-8" />
+                  </div>
+                  <h4 className="font-black text-slate-900 text-lg mb-2 tracking-tight">
+                    Sign In Required
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-xs mb-6 leading-relaxed">
+                    KelanaAI Travel Concierge is exclusively available to registered travelers. Please sign in or create an account to start asking verified travel questions!
+                  </p>
+                  <button
+                    onClick={() => openAuthModal("login")}
+                    className="px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    <span>Sign In / Create Account</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Messages Scroll Area */}
               <div
                 ref={messagesContainerRef}
                 className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 custom-scrollbar bg-slate-50/60"
@@ -401,6 +432,8 @@ export function AskAiFloatingWidget() {
                   )}
                 </button>
               </form>
+                </>
+              )}
             </>
           )}
         </div>

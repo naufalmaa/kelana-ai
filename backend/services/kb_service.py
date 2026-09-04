@@ -124,27 +124,31 @@ def ask_knowledge_base(
             "metadata": metadata,
         })
 
-    # 2. Build RAG prompt
+    # 2. Build RAG prompt with strict Travel Intent Guardrails
+    system_prompt = (
+        "You are KelanaAI's dedicated travel concierge assistant. "
+        "Your mission is to assist travelers with itinerary planning, destination guides, transit options, attractions, accommodations, packing essentials, local food/culture, and travel budgeting.\n\n"
+        "STRICT INTENT & DOMAIN SCOPE GUARDRAILS:\n"
+        "1. EXCLUSIVE TRAVEL DOMAIN: You must ONLY answer questions directly related to travel, geography, tourism, destinations, and trip planning.\n"
+        "2. OUT-OF-SCOPE REFUSAL: If the user asks about anything outside travel (such as politics, politicians or public figures like Donald Trump, coding/programming, medical diagnosis, cryptocurrency, homework/math, gossip, etc.), you MUST politely and concisely decline in 1-2 brief sentences. "
+        "Example refusal: \"I am KelanaAI Travel Concierge, and I specialize exclusively in travel planning, destination guides, and itineraries. How can I help you with your next trip or travel destination?\"\n"
+        "3. NEVER provide political commentary, biographies of political figures, code implementations, or general non-travel answers.\n"
+        "4. CURRENCY & LOCAL ACCURACY: When providing price estimates or cost breakdowns, strictly respect the requested currency or the destination's local currency (e.g., IDR / Rp for Indonesia, JPY / ¥ for Japan, EUR for Europe). Never use generic dollar signs ($) when non-USD currency is requested.\n"
+        "5. When verified knowledge base context is provided below, ground your response accurately and concisely in that context."
+    )
+
     if context_chunks:
         context_text = "\n\n---\n\n".join(context_chunks)
-        system_prompt = (
-            "You are KelanaAI's expert travel concierge assistant. "
-            "Answer the user's travel question accurately, informatively, and concisely "
-            "based on the verified travel context provided below. "
-            "If the context does not fully answer the question, supplement with helpful general travel knowledge."
-        )
         user_message = (
             f"Context from Knowledge Base:\n{context_text}\n\n"
             f"User Question:\n{question}\n\n"
-            "Please provide a well-structured, friendly, and practical answer."
+            "If the question is travel-related, provide a well-structured, friendly, and practical answer. If it is outside the travel domain, concisely decline as per your system instructions."
         )
     else:
-        # Fallback prompt without KB context
-        system_prompt = (
-            "You are KelanaAI's expert travel concierge assistant. "
-            "Answer the user's travel question in a friendly, practical, and well-structured manner."
+        user_message = (
+            f"User Question:\n{question}\n\n"
+            "If the question is travel-related, provide a well-structured, friendly, and practical answer. If it is outside the travel domain, concisely decline as per your system instructions."
         )
-        user_message = question
 
     # 3. Generate grounded response using Bedrock Converse API
     try:

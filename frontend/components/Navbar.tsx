@@ -115,8 +115,14 @@ export function Navbar({
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Ask AI Button on mobile / quick action */}
           <button
-            onClick={() => openChat()}
-            className="md:hidden flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl"
+            onClick={() => {
+              if (!isAuthenticated) {
+                openAuthModal("login");
+                return;
+              }
+              openChat();
+            }}
+            className="md:hidden flex items-center gap-1 px-2.5 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-xl cursor-pointer"
             title="Ask AI Concierge"
           >
             <Bot className="h-3.5 w-3.5 text-indigo-600" />

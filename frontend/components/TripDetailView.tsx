@@ -33,6 +33,7 @@ import {
 import { Trip, StructuredAiRecommendation } from "@/types/trip";
 import { getDestinationPhoto, formatCurrency, parseRecommendation } from "@/lib/utils";
 import { useAskAi } from "@/context/AskAiContext";
+import { useAuth } from "@/context/AuthContext";
 
 export interface TripDetailViewProps {
   trip: Trip | null;
@@ -46,6 +47,7 @@ export function TripDetailView({
   emptySubtitle = "Fill in your travel destination on the left to generate a personalized itinerary, or select from your saved trips.",
 }: TripDetailViewProps) {
   const { openChat } = useAskAi();
+  const { isAuthenticated, openAuthModal } = useAuth();
   const [copied, setCopied] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"all" | "itinerary" | "tips" | "food" | "budget">("all");
 
@@ -672,12 +674,16 @@ export function TripDetailView({
           </div>
 
           <button
-            onClick={() =>
+            onClick={() => {
+              if (!isAuthenticated) {
+                openAuthModal("login");
+                return;
+              }
               openChat(
                 `Can you provide more specific recommendations, transit tips, and local secrets for ${trip.destination}, ${trip.country}?`,
                 true
-              )
-            }
+              );
+            }}
             className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-xs shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
           >
             <Sparkles className="h-4 w-4 text-amber-300" />

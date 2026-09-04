@@ -202,11 +202,15 @@ Trip Parameters:
 - Destination: {destination}, {country}
 - Duration: {days} days
 - Total Budget: {currency} {budget}
+- Target Currency: {currency} (All financial amounts must strictly be formatted and calculated in {currency})
 - Travel Party / Companion Style: {travel_style} (e.g. Solo, Couple, or Family)
 - Trip Theme & Activity Focus: {active_theme} (e.g. Cultural & Culinary, Relaxed & Nature, Adventure & Outdoors, Luxury & Sightseeing)
 - Travel Month / Season: {travel_month}
 
-Ensure that the itinerary and recommendations are specifically customized for a {travel_style} traveler focusing on {active_theme}.
+CRITICAL CURRENCY & COUNTRY LOCALIZATION:
+- You MUST strictly use {currency} for all monetary estimations, ticket costs, and budget descriptions. NEVER output dollar signs ($) if {currency} is not USD (e.g. for IDR use IDR/Rp, for EUR use EUR/€, for JPY use JPY/¥).
+- Customize transit recommendations (e.g. ride-hailing, metro/train passes), dining spots, and cultural tips specifically and authentically for {destination}, {country}.
+- Ensure that the itinerary and recommendations are specifically customized for a {travel_style} traveler focusing on {active_theme}.
 
 You MUST return your entire output STRICTLY as a single valid JSON object. Do not include any explanations, markdown comments, or commentary outside of the JSON.
 

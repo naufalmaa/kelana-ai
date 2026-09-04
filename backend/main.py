@@ -358,7 +358,14 @@ def update_trip(
     return trip
 
 @app.post("/api/v1/ask")
-def ask_endpoint(request: QuestionRequest):
+def ask_endpoint(
+    request: QuestionRequest,
+    user: Users = Depends(get_current_user),
+):
+    """
+    POST /api/v1/ask
+    Protected endpoint for KelanaAI Concierge (requires authenticated user).
+    """
     result = ask_knowledge_base(request.question)
 
     if isinstance(result, dict):
