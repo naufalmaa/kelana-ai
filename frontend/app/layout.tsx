@@ -19,6 +19,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "KelanaAI - AI Travel Planner & Personalized Itinerary Architect",
   description: "Generate tailored travel itineraries with smart budget breakdowns and local guides powered by AI.",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" }
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

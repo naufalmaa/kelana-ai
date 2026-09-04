@@ -393,7 +393,7 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      Destination City <span className="text-rose-500">*</span>
+                      Destination <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative">
                       <MapPin className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />

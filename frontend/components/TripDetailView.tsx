@@ -274,72 +274,75 @@ export function TripDetailView({
 
         {/* 3. SECTION TABS FILTER */}
         {parsedRecommendation && (
-          <div className="overflow-x-auto pb-1 custom-scrollbar">
-            <div className="flex items-center gap-1.5 p-1.5 bg-slate-100/90 rounded-2xl w-max sm:w-full">
+          <div className="w-full">
+            <div className="grid grid-cols-5 gap-1 p-1 sm:p-1.5 bg-slate-100/90 border border-slate-200/70 rounded-2xl w-full">
               <button
                 onClick={() => setActiveTab("all")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`py-1.5 sm:py-2 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                   activeTab === "all"
-                    ? "bg-white text-indigo-700 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-indigo-700 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
                 }`}
+                title="Full Overview"
               >
-                <span className="flex items-center gap-1.5">
-                  <Layers className="h-3.5 w-3.5" />
-                  Full Overview
+                <Layers className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  <span className="hidden xl:inline">Full </span>Overview
                 </span>
               </button>
               <button
                 onClick={() => setActiveTab("itinerary")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`py-1.5 sm:py-2 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                   activeTab === "itinerary"
-                    ? "bg-white text-indigo-700 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-indigo-700 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
                 }`}
+                title="Daily Itinerary"
               >
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Daily Itinerary
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  <span className="hidden xl:inline">Daily </span>Itinerary
                 </span>
               </button>
               <button
                 onClick={() => setActiveTab("tips")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`py-1.5 sm:py-2 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                   activeTab === "tips"
-                    ? "bg-white text-indigo-700 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-indigo-700 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
                 }`}
+                title="Travel Tips"
               >
-                <span className="flex items-center gap-1.5">
-                  <Lightbulb className="h-3.5 w-3.5" />
-                  Travel Tips
+                <Lightbulb className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  <span className="hidden xl:inline">Travel </span>Tips
                 </span>
               </button>
               <button
                 onClick={() => setActiveTab("food")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`py-1.5 sm:py-2 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                   activeTab === "food"
-                    ? "bg-white text-indigo-700 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-indigo-700 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
                 }`}
+                title="Local Food"
               >
-                <span className="flex items-center gap-1.5">
-                  <Utensils className="h-3.5 w-3.5" />
-                  Local Food
+                <Utensils className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  <span className="hidden xl:inline">Local </span>Food
                 </span>
               </button>
               <button
                 onClick={() => setActiveTab("budget")}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`py-1.5 sm:py-2 px-1 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 min-w-0 ${
                   activeTab === "budget"
-                    ? "bg-white text-indigo-700 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-white text-indigo-700 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/50"
                 }`}
+                title="Budget Breakdown"
               >
-                <span className="flex items-center gap-1.5">
-                  <PieChart className="h-3.5 w-3.5" />
-                  Budget Breakdown
-                </span>
+                <PieChart className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">Budget</span>
               </button>
             </div>
           </div>

@@ -9,8 +9,24 @@ load_dotenv()
 # connection string from .env
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///./fallback.db"
+
+# engine configuration with auto-reconnect for serverless databases (like Neon)
+engine_kwargs = {}
+if "sqlite" not in DATABASE_URL:
+    engine_kwargs = {
+        "pool_pre_ping": True,   # Automatically reconnects if SSL connection dropped during idle
+        "pool_recycle": 300,     # Recycle connections every 5 minutes
+        "pool_size": 10,
+        "max_overflow": 20,
+    }
+
 # engine = connection pool
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 
 # SessionLocal = factory for DB Sessions
 SessionLocal = sessionmaker(bind=engine, autoflush=False)
