@@ -62,6 +62,7 @@ function ChatContent() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Auto-scroll helper (Requirement 2: Auto-scroll to latest message)
   const scrollToBottom = useCallback((smooth = true) => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTo({
@@ -71,9 +72,17 @@ function ChatContent() {
     }
   }, []);
 
-  // Format date helper
+  // Format date helper (Requirement 4: Timestamp for each message)
   const formatDate = (isoString?: string) => {
-    if (!isoString) return "";
+    if (!isoString) {
+      const now = new Date();
+      return now.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
     const date = new Date(isoString);
     return date.toLocaleDateString("en-US", {
       month: "short",
@@ -549,7 +558,7 @@ function ChatContent() {
           {/* MAIN CHAT AREA (Part 6 & Hands-on Lab)                      */}
           {/* ============================================================ */}
           <section className="flex-1 min-h-0 flex flex-col bg-white overflow-hidden relative">
-            {/* Chat Top Header */}
+            {/* Chat Top Header (Requirement 1: Conversation Title) */}
             <div className="px-4 py-3 border-b border-slate-100 bg-white/95 backdrop-blur flex items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 {!isSidebarOpen && (
@@ -567,9 +576,14 @@ function ChatContent() {
                 </div>
                 
                 <div className="min-w-0">
-                  <h2 className="text-sm font-black text-slate-900 truncate">
-                    {activeConversation?.title || "KelanaAI Chat"}
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <h2
+                      className="text-sm font-black text-slate-900 truncate"
+                      title={activeConversation?.title || "KelanaAI Chat"}
+                    >
+                      {activeConversation?.title || "KelanaAI Chat"}
+                    </h2>
+                  </div>
                   <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                     Amazon Bedrock Converse • Context-Aware
@@ -772,13 +786,16 @@ function ChatContent() {
                           </div>
                         )}
 
-                        {/* Message Footer / Copy */}
+                        {/* Message Footer / Timestamp (Requirement 4: Timestamp for each message) */}
                         <div
                           className={`mt-2 flex items-center justify-between gap-3 text-[10px] ${
                             isUser ? "text-indigo-200" : "text-slate-400"
                           }`}
                         >
-                          <span>{formatDate(msg.created_at)}</span>
+                          <span className="flex items-center gap-1 font-medium">
+                            <Clock className="w-3 h-3 inline opacity-75 shrink-0" />
+                            <span>{formatDate(msg.created_at)}</span>
+                          </span>
                           {!isUser && (
                             <button
                               onClick={() => copyToClipboard(msg.content, msg.id || index)}
@@ -812,7 +829,7 @@ function ChatContent() {
                 })
               )}
 
-              {/* Thinking / Streaming Indicator */}
+              {/* Typing / Thinking Indicator (Requirement 3: Typing indicator) */}
               {isSending && (
                 <div className="flex gap-3 max-w-3xl mr-auto justify-start animate-fadeIn">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm mt-1">
@@ -820,12 +837,15 @@ function ChatContent() {
                   </div>
                   <div className="bg-slate-50 border border-slate-200/80 rounded-3xl rounded-tl-none px-5 py-3.5 shadow-sm flex items-center gap-3">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce"></span>
-                      <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.2s]"></span>
-                      <span className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.4s]"></span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-bounce"></span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.2s]"></span>
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-bounce [animation-delay:0.4s]"></span>
                     </div>
-                    <span className="text-xs text-slate-500 font-medium">
-                      KelanaAI is thinking with Amazon Bedrock...
+                    <span className="text-xs text-slate-600 font-semibold flex items-center gap-1.5">
+                      <span>KelanaAI is thinking...</span>
+                      <span className="hidden sm:inline text-[11px] text-slate-400 font-normal">
+                        (Processing with Amazon Bedrock)
+                      </span>
                     </span>
                   </div>
                 </div>
